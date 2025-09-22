@@ -18,6 +18,7 @@
 
 #include <utility/Camera.h>
 #include <utility/TimeScope.h>
+#include <utility/Transform.h>
 
 using namespace RenderingUtilities;
 
@@ -30,6 +31,96 @@ glm::ivec2 mousePosition{ };
 void mouseMoveCallback(GLFWwindow* window, double x, double y) {
     mousePosition.x = static_cast<int>(x);
     mousePosition.y = static_cast<int>(y);
+}
+
+void MoveCamera(Camera& camera, GLFWwindow* window, float dt, const glm::ivec2& mousePositionWRTViewport, const glm::ivec2& viewportSize, bool mouseOverViewport) {
+    static bool mouseDown{ false };
+    static bool hasMoved{ false };
+    static glm::ivec2 lastMousePosition{ };
+
+    if (!hasMoved) {
+        lastMousePosition = mousePositionWRTViewport;
+        hasMoved = true;
+    }
+
+    bool positionChange{ false };
+    bool directionChange{ false };
+    const float velocity = camera.speed * dt;
+
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
+        positionChange = true;
+        camera.position += camera.frontVector * velocity;
+    }
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
+        positionChange = true;
+        camera.position -= camera.frontVector * velocity;
+    }
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
+        positionChange = true;
+        camera.position += camera.rightVector * velocity;
+    }
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
+        positionChange = true;
+        camera.position -= camera.rightVector * velocity;
+    }
+    if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
+        positionChange = true;
+        camera.position += camera.upVector * velocity;
+    }
+    if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) {
+        positionChange = true;
+        camera.position -= camera.upVector * velocity;
+    }
+
+    if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_1) == GLFW_PRESS) {
+        if (mouseDown == false) {
+            lastMousePosition.x = mousePositionWRTViewport.x;
+            lastMousePosition.y = mousePositionWRTViewport.y;
+        }
+
+        mouseDown = true;
+    }
+
+    if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_1) == GLFW_RELEASE) {
+        mouseDown = false;
+    }
+
+    if (!mouseOverViewport) {
+        hasMoved = false;
+    }
+
+    if (mouseDown && mouseOverViewport) {
+        const float xDelta = (float)mousePositionWRTViewport.x - (float)lastMousePosition.x;
+        const float yDelta = (float)lastMousePosition.y - (float)mousePositionWRTViewport.y;
+
+        camera.yaw += xDelta * camera.lookSensitivity;
+        camera.pitch += yDelta * camera.lookSensitivity;
+
+        if (camera.pitch > 89.9f) {
+            camera.pitch = 89.9f;
+        }
+        else if (camera.pitch < -89.9f) {
+            camera.pitch = -89.9f;
+        }
+
+        directionChange = true;
+    }
+
+    if (mouseDown
+        //|| updateCameraVectors  // TODO add back if you can adjust camera from IMGUI
+        && mouseOverViewport) {
+        camera.frontVector.x = cos(glm::radians(camera.yaw)) * cos(glm::radians(camera.pitch));
+        camera.frontVector.y = sin(glm::radians(camera.pitch));
+        camera.frontVector.z = sin(glm::radians(camera.yaw)) * cos(glm::radians(camera.pitch));
+        camera.frontVector = glm::normalize(camera.frontVector);
+
+        camera.rightVector = glm::normalize(glm::cross(camera.frontVector, camera.upVector));
+
+        lastMousePosition.x = mousePositionWRTViewport.x;
+        lastMousePosition.y = mousePositionWRTViewport.y;
+
+        //App::updateCameraVectors = false;
+    }
 }
 
 int main() {
@@ -89,29 +180,47 @@ int main() {
     Camera camera{ };
 
     VertexAttributeObject vao{ };
+
     VertexBufferObject vbo{ std::vector<float>{
         -0.5f, -0.5f, 0.0f,     0.0f, 0.0f, 1.0f,     0.0f, 0.0f,
-            0.0f,  0.5f, 0.0f,     0.0f, 0.0f, 1.0f,     0.0f, 0.5f,
-            0.5f, -0.5f, 0.0f,     0.0f, 0.0f, 1.0f,     1.0f, 0.0f
+         0.0f,  0.5f, 0.0f,     0.0f, 0.0f, 1.0f,     0.0f, 0.5f,
+         0.5f, -0.5f, 0.0f,     0.0f, 0.0f, 1.0f,     1.0f, 0.0f
     } };
 
     ElementBufferObject ebo{ std::vector<unsigned int>{
-        0, 1, 2
+        2, 1, 0
     } };
 
-    glm::mat4 transform{ 1.0f };
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
+
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+    glEnableVertexAttribArray(2);
+
+    vao.Unbind();
+    vbo.Unbind();
+    ebo.Unbind();
+
+    Transform transform{ };
+    transform.position = glm::vec3{ 0.0f, 0.0f, 5.0f };
 
     std::chrono::duration<double> frameTime{ };
     std::chrono::duration<double> renderTime{ };
+
+    bool mouseOverViewPort{ false };
+    glm::ivec2 viewportOffset{ 0, 0 };
 
     while (!glfwWindowShouldClose(window)) {
         TimeScope frameTimeScope{ &frameTime };
 
         glfwPollEvents();
 
-        //glm::ivec2 mousePositionWRTViewport{ mousePosition.x - viewportOffset.x, lastFrameViewportSize.y - (viewportOffset.y - mousePosition.y) };
+        glm::ivec2 mousePositionWRTViewport{ mousePosition.x - viewportOffset.x, lastFrameViewportSize.y - (viewportOffset.y - mousePosition.y) };
 
-        //MoveCamera(camera, window, static_cast<float>(frameTime.count()), mousePositionWRTViewport, lastFrameViewportSize, mouseOverViewPort);
+        MoveCamera(camera, window, static_cast<float>(frameTime.count()), mousePositionWRTViewport, lastFrameViewportSize, mouseOverViewPort);
 
         {
             TimeScope renderingTimeScope{ &renderTime };
@@ -125,7 +234,8 @@ int main() {
             solidShader.SetVec3("color", glm::vec3{ 1.0f, 0.0f, 0.0f });
 
             glm::mat4 projection = glm::perspective(glm::radians(camera.fov), (float)rendererTarget.GetSize().x / (float)rendererTarget.GetSize().y, camera.nearPlane, camera.farPlane);
-            glm::mat4 mvp = projection * camera.View() * transform;
+            transform.CalculateMatrix();
+            glm::mat4 mvp = projection * camera.View() * transform.matrix;
 
             solidShader.SetMat4("mvp", mvp);
 
@@ -157,9 +267,9 @@ int main() {
             // Display the frame with the last frames viewport size (The same size it was rendered with)
             ImGui::Image((ImTextureID)rendererTarget.GetTexture().Get(), ImVec2{ (float)lastFrameViewportSize.x, (float)lastFrameViewportSize.y }, ImVec2{ 0.0f, 1.0f }, ImVec2{ 1.0f, 0.0f });
 
-            //mouseOverViewPort = ImGui::IsItemHovered();
+            mouseOverViewPort = ImGui::IsItemHovered();
 
-            //viewportOffset = glm::ivec2{ (int)ImGui::GetCursorPos().x, (int)ImGui::GetCursorPos().y }; // TODO
+            viewportOffset = glm::ivec2{ (int)ImGui::GetCursorPos().x, (int)ImGui::GetCursorPos().y }; // TODO
 
         } ImGui::End(); // Viewport
 
