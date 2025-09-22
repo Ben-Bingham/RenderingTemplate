@@ -18,6 +18,7 @@ workspace "WORKSPACE-NAME"
 		include "3rdParty/ImGui"
 		include "3rdParty/glm"
 		include "3rdParty/assimp"
+		include "3rdParty/RenderingUtilities"
 	group ""
 
 project "PROJECT-NAME"
@@ -60,7 +61,7 @@ project "PROJECT-NAME"
 		-- Assimp
 		"3rdParty/assimp/ConfigurationHeaders/",
 		"3rdParty/assimp/ConfigurationHeaders/assimp/",
-		"3rdParty/assimp/include/",
+		"3rdParty/assimp/include/"
 	}
 
 	libdirs {
@@ -74,5 +75,6 @@ project "PROJECT-NAME"
         "glfw3",
 		"ImGui",
 		"glm",
-		"assimp"
+		"assimp",
+		"RenderingUtilities"
 	}
