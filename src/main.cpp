@@ -3,15 +3,20 @@
 #include <gl/glew.h>
 #include <GLFW/glfw3.h>
 
+#include <glm/ext/matrix_clip_space.hpp>
+
 #include <imgui.h>
 #include <implot.h>
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
 
 #include <utility/OpenGl/Shader.h>
+#include <utility/OpenGl/VertexAttributeObject.h>
+#include <utility/OpenGl/Buffer.h>
 #include <utility/OpenGl/GLDebug.h>
 #include <utility/OpenGl/RenderTarget.h>
 
+#include <utility/Camera.h>
 #include <utility/TimeScope.h>
 
 using namespace RenderingUtilities;
@@ -76,7 +81,29 @@ int main() {
 
     RenderTarget rendererTarget{ defaultFramebufferSize };
 
+    Shader solidShader{
+        "assets\\shaders\\OpenGlSolidShading\\solid.vert",
+        "assets\\shaders\\OpenGlSolidShading\\solid.frag"
+    };
+
+    Camera camera{ };
+
+    VertexAttributeObject vao{ };
+    VertexBufferObject vbo{ std::vector<float>{
+        -0.5f, -0.5f, 0.0f,     0.0f, 0.0f, 1.0f,     0.0f, 0.0f,
+            0.0f,  0.5f, 0.0f,     0.0f, 0.0f, 1.0f,     0.0f, 0.5f,
+            0.5f, -0.5f, 0.0f,     0.0f, 0.0f, 1.0f,     1.0f, 0.0f
+    } };
+
+    ElementBufferObject ebo{ std::vector<unsigned int>{
+        0, 1, 2
+    } };
+
+    glm::mat4 transform{ 1.0f };
+
     std::chrono::duration<double> frameTime{ };
+    std::chrono::duration<double> renderTime{ };
+
     while (!glfwWindowShouldClose(window)) {
         TimeScope frameTimeScope{ &frameTime };
 
@@ -88,6 +115,19 @@ int main() {
 
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        {
+            TimeScope renderingTimeScope{ &renderTime };
+            solidShader.SetVec3("color", glm::vec3{ 1.0f, 0.0f, 0.0f });
+
+            glm::mat4 projection = glm::perspective(glm::radians(camera.fov), (float)rendererTarget.GetSize().x / (float)rendererTarget.GetSize().y, camera.nearPlane, camera.farPlane);
+            glm::mat4 mvp = projection * camera.View() * transform;
+
+            solidShader.SetMat4("mvp", mvp);
+
+            vao.Bind();
+            glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, nullptr);
+        }
 
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
