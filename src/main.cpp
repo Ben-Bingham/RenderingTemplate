@@ -82,8 +82,8 @@ int main() {
     RenderTarget rendererTarget{ defaultFramebufferSize };
 
     Shader solidShader{
-        "assets\\shaders\\OpenGlSolidShading\\solid.vert",
-        "assets\\shaders\\OpenGlSolidShading\\solid.frag"
+        "assets\\shaders\\solid.vert",
+        "assets\\shaders\\solid.frag"
     };
 
     Camera camera{ };
@@ -113,11 +113,15 @@ int main() {
 
         //MoveCamera(camera, window, static_cast<float>(frameTime.count()), mousePositionWRTViewport, lastFrameViewportSize, mouseOverViewPort);
 
-        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
         {
             TimeScope renderingTimeScope{ &renderTime };
+
+            rendererTarget.Bind();
+
+            glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+            solidShader.Bind();
             solidShader.SetVec3("color", glm::vec3{ 1.0f, 0.0f, 0.0f });
 
             glm::mat4 projection = glm::perspective(glm::radians(camera.fov), (float)rendererTarget.GetSize().x / (float)rendererTarget.GetSize().y, camera.nearPlane, camera.farPlane);
@@ -127,6 +131,8 @@ int main() {
 
             vao.Bind();
             glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, nullptr);
+
+            rendererTarget.Unbind();
         }
 
         ImGui_ImplOpenGL3_NewFrame();
