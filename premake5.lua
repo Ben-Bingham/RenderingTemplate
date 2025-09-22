@@ -55,6 +55,7 @@ project "PROJECT-NAME"
 		"3rdParty/stb",
 		"3rdParty/ImGui/src",
 		"3rdParty/glm",
+		"3rdParty/RenderingUtilities/src/",
 		
 		-- Assimp
 		"3rdParty/assimp/ConfigurationHeaders/",
