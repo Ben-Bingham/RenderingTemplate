@@ -106,9 +106,7 @@ void MoveCamera(Camera& camera, GLFWwindow* window, float dt, const glm::ivec2& 
         directionChange = true;
     }
 
-    if (mouseDown
-        //|| updateCameraVectors  // TODO add back if you can adjust camera from IMGUI
-        && mouseOverViewport) {
+    if (mouseDown && mouseOverViewport) {
         camera.frontVector.x = cos(glm::radians(camera.yaw)) * cos(glm::radians(camera.pitch));
         camera.frontVector.y = sin(glm::radians(camera.pitch));
         camera.frontVector.z = sin(glm::radians(camera.yaw)) * cos(glm::radians(camera.pitch));
@@ -118,8 +116,6 @@ void MoveCamera(Camera& camera, GLFWwindow* window, float dt, const glm::ivec2& 
 
         lastMousePosition.x = mousePositionWRTViewport.x;
         lastMousePosition.y = mousePositionWRTViewport.y;
-
-        //App::updateCameraVectors = false;
     }
 }
 
@@ -269,7 +265,7 @@ int main() {
 
             mouseOverViewPort = ImGui::IsItemHovered();
 
-            viewportOffset = glm::ivec2{ (int)ImGui::GetCursorPos().x, (int)ImGui::GetCursorPos().y }; // TODO
+            viewportOffset = glm::ivec2{ (int)ImGui::GetCursorPos().x, (int)ImGui::GetCursorPos().y };
 
         } ImGui::End(); // Viewport
 
