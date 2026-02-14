@@ -3,7 +3,7 @@ project "ImGui"
     language "C++"
     cppdialect "C++20"
 
-	flags "MultiProcessorCompile"
+    multiprocessorcompile "on"
 
     filter "configurations:Debug"
         symbols "on"

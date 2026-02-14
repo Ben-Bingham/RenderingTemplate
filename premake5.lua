@@ -27,7 +27,7 @@ project "PROJECT-NAME"
 
 	cppdialect "C++20"
 
-	flags "MultiProcessorCompile"
+    multiprocessorcompile "on"
 
 	targetdir ("%{wks.location}/build/bin/%{prj.name}")
 	objdir ("%{wks.location}/build/bin-int/%{prj.name}")
