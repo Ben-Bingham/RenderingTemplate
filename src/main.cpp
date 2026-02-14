@@ -255,7 +255,6 @@ int main() {
 
         // Keep track of this so that we can make these changes after the imgui frame is finished
         size_t changedPointLightIndex{ 0 };
-        bool pointLightChanged{ false };
 
         glm::ivec2 newViewportSize{ };
 
