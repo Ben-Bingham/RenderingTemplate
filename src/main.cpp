@@ -21,7 +21,7 @@
 #include <utility/Transform.h>
 
 #include "MoveCamera.h"
-#include "GraphicsInit.h"
+#include "Boilerplate.h"
 
 using namespace RenderingUtilities;
 

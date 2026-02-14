@@ -1,4 +1,4 @@
-#include "GraphicsInit.h"
+#include "Boilerplate.h"
 
 #include <iostream>
 
