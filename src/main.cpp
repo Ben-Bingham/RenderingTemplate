@@ -6,14 +6,10 @@
 #include <glm/ext/matrix_clip_space.hpp>
 
 #include <imgui.h>
-#include <implot.h>
-#include <imgui_impl_glfw.h>
-#include <imgui_impl_opengl3.h>
 
 #include <utility/OpenGl/Shader.h>
 #include <utility/OpenGl/VertexAttributeObject.h>
 #include <utility/OpenGl/Buffer.h>
-#include <utility/OpenGl/GLDebug.h>
 #include <utility/OpenGl/RenderTarget.h>
 
 #include <utility/Camera.h>
@@ -106,9 +102,7 @@ int main() {
             rendererTarget.Unbind();
         }
 
-        ImGui_ImplOpenGL3_NewFrame();
-        ImGui_ImplGlfw_NewFrame();
-        ImGui::NewFrame();
+        ImGuiStartFrame();
 
         //ImGui::ShowDemoWindow();
         //ImGui::ShowMetricsWindow();
@@ -133,17 +127,7 @@ int main() {
 
         } ImGui::End(); // Viewport
 
-        ImGui::Render();
-        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-
-        const ImGuiIO& io = ImGui::GetIO();
-
-        if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
-            GLFWwindow* currentContextBackup = glfwGetCurrentContext();
-            ImGui::UpdatePlatformWindows();
-            ImGui::RenderPlatformWindowsDefault();
-            glfwMakeContextCurrent(currentContextBackup);
-        }
+        ImGuiEndFrame();
 
         // After ImGui has rendered its frame, we resize the framebuffer if needed for next frame
         if (newViewportSize != lastFrameViewportSize) {
@@ -155,10 +139,5 @@ int main() {
         glfwSwapBuffers(window);
     }
 
-    ImGui_ImplOpenGL3_Shutdown();
-    ImGui_ImplGlfw_Shutdown();
-    ImPlot::DestroyContext();
-    ImGui::DestroyContext();
-
-    glfwTerminate();
+    DestroyGraphics();
 }
