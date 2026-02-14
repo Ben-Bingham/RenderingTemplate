@@ -15,6 +15,7 @@
 #include <utility/Camera.h>
 #include <utility/TimeScope.h>
 #include <utility/Transform.h>
+#include <utility/Geometry.h>
 
 #include "MoveCamera.h"
 #include "Boilerplate.h"
@@ -38,15 +39,11 @@ int main() {
 
     VertexAttributeObject vao{ };
 
-    VertexBufferObject vbo{ std::vector<float>{
-        -0.5f, -0.5f, 0.0f,     0.0f, 0.0f, 1.0f,     0.0f, 0.0f,
-         0.0f,  0.5f, 0.0f,     0.0f, 0.0f, 1.0f,     0.0f, 0.5f,
-         0.5f, -0.5f, 0.0f,     0.0f, 0.0f, 1.0f,     1.0f, 0.0f
-    } };
+    Shape triangle = GetTriangle();
 
-    ElementBufferObject ebo{ std::vector<unsigned int>{
-        2, 1, 0
-    } };
+    VertexBufferObject vbo{ triangle.vertices };
+
+    ElementBufferObject ebo{ triangle.indices };
 
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
@@ -97,7 +94,7 @@ int main() {
             solidShader.SetMat4("mvp", mvp);
 
             vao.Bind();
-            glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, nullptr);
+            glDrawElements(GL_TRIANGLES, triangle.Size(), GL_UNSIGNED_INT, nullptr);
 
             rendererTarget.Unbind();
         }
